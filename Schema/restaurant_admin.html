@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>לוח בקרה — Corner Grill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf6ef; --surface:#ffffff; --text:#211a12; --sub:#8a7b68;
+  --primary:#c0392b; --primary-text:#ffffff; --border:#e6dcc8; --chip:#fbeee9;
+  --ready:#3e7d44; --prep:#b9791f;
+  --font-d:'Archivo',system-ui,sans-serif;
+  --font-b:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#181310;--surface:#241d17;--text:#f2e9db;--sub:#a5947e;--border:#3a2f24;--chip:#3a231d;}
+}
+:root[data-theme="dark"]{--bg:#181310;--surface:#241d17;--text:#f2e9db;--sub:#a5947e;--border:#3a2f24;--chip:#3a231d;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-b);-webkit-font-smoothing:antialiased;height:100%;}
+button{font-family:inherit;cursor:pointer;}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+#app-wrap{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);}
+#statusbar{position:sticky;top:0;z-index:10;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-d);font-weight:700;font-size:15px;}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.dot.open{background:var(--ready);box-shadow:0 0 0 4px rgba(62,125,68,.15);}
+.dot.closed{background:var(--primary);box-shadow:0 0 0 4px rgba(192,57,43,.15);}
+main#app{flex:1;padding:18px 16px 24px;overflow-y:auto;}
+.view{display:none;}
+.view.active{display:block;}
+.page-title{font-family:var(--font-d);font-size:22px;font-weight:800;letter-spacing:-.01em;margin:2px 0 18px;}
+.section-note{font-size:12px;color:var(--sub);margin:-10px 0 16px;}
+#bottomnav{position:sticky;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px);}
+#bottomnav.hidden{display:none;}
+.nav-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;padding:13px 0 11px;background:none;border:none;border-top:2px solid transparent;color:var(--sub);font-family:var(--font-d);font-size:12px;font-weight:700;}
+.nav-btn.active{color:var(--primary);border-top-color:var(--primary);}
+
+/* -- system page -- */
+.switch-card{display:flex;align-items:center;justify-content:space-between;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);margin-bottom:10px;}
+.switch-card.sub{margin-right:0;background:var(--bg);border-style:dashed;}
+.switch-label{font-size:14px;font-weight:600;}
+.switch{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.switch .slider{position:absolute;inset:0;background:var(--border);border-radius:26px;transition:.2s;}
+.switch .slider:before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.switch input:checked + .slider{background:var(--ready);}
+.switch input:checked + .slider:before{transform:translateX(18px);}
+.field-block{margin-bottom:16px;}
+.field-label{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:6px;display:block;}
+.field-input{width:100%;padding:11px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-family:inherit;}
+.btn-outline{width:100%;padding:13px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:var(--font-d);font-weight:700;font-size:14px;margin-top:18px;}
+.back-btn{background:none;border:none;color:var(--primary);font-family:var(--font-d);font-weight:700;font-size:14px;padding:0;margin-bottom:14px;}
+.primary-btn{width:100%;padding:14px;border-radius:6px;border:none;background:var(--primary);color:var(--primary-text);font-family:var(--font-d);font-weight:700;font-size:15px;margin-top:6px;}
+
+/* -- inventory page -- */
+.cat-tabs{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.cat-tab{width:100%;text-align:start;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:var(--font-d);font-weight:700;font-size:14px;}
+.cat-tab.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary);}
+.item-row{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);margin-bottom:10px;}
+.item-row.unavailable{opacity:.7;}
+.item-top{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.item-name{font-family:var(--font-d);font-weight:700;font-size:15px;}
+.status-pill{flex-shrink:0;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;}
+.status-pill.unavailable{background:rgba(192,57,43,.15);color:var(--primary);}
+.status-pill.limited{background:rgba(185,121,31,.15);color:var(--prep);}
+.status-pill.instock{background:rgba(62,125,68,.15);color:var(--ready);}
+.stock-controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.stock-btn{flex:1;min-width:84px;padding:9px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12.5px;font-weight:700;text-align:center;}
+.stock-btn.on.unavailable{background:var(--primary);color:#fff;border-color:var(--primary);}
+.stock-btn.on.limited{background:var(--prep);color:#fff;border-color:var(--prep);}
+.stock-btn.on.instock{background:var(--ready);color:#fff;border-color:var(--ready);}
+.qty-wrap{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px;width:fit-content;}
+.qty-wrap button{width:26px;height:26px;border-radius:4px;border:none;background:var(--surface);color:var(--text);font-family:var(--font-d);font-weight:800;font-size:14px;line-height:1;}
+.qty-wrap input{width:40px;border:none;background:none;color:var(--text);font-family:var(--font-d);font-weight:700;text-align:center;font-size:14px;}
+.qty-label{font-size:12px;color:var(--sub);}
+.options-section{border-top:1px dashed var(--border);padding-top:10px;}
+.options-label{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:6px;}
+.options-label:not(:first-child){margin-top:10px;}
+.chip-list{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{padding:6px 11px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12.5px;font-weight:600;}
+.chip.on{background:var(--chip);border-color:var(--primary);color:var(--primary);font-weight:700;}
+.chip-empty{font-size:12px;color:var(--sub);}
+
+/* -- orders page -- */
+.empty-state{text-align:center;color:var(--sub);padding:60px 16px;font-size:14px;line-height:1.6;}
+.order-row{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;background:var(--surface);}
+.order-row-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.order-id{font-family:'Courier New',monospace;font-weight:700;font-size:15px;}
+.order-time{font-size:12px;color:var(--sub);margin-top:2px;}
+.status-badge{font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;white-space:nowrap;}
+.status-badge.preparing{background:rgba(185,121,31,.15);color:var(--prep);}
+.status-badge.ready{background:rgba(62,125,68,.15);color:var(--ready);}
+.order-detail{margin-top:0;max-height:0;overflow:hidden;}
+.order-detail.open{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);max-height:600px;}
+.cart-item-sub{font-size:13px;color:var(--sub);margin-top:4px;}
+.order-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);}
+.order-btn{flex:1;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font-d);font-weight:700;font-size:13px;}
+.order-btn.primary{background:var(--ready);color:#fff;border-color:var(--ready);}
+.order-btn.danger{color:var(--primary);border-color:var(--primary);}
+
+/* -- shared modal / toast -- */
+.overlay{position:fixed;inset:0;background:rgba(20,15,10,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;}
+.overlay.hidden{display:none;}
+.modal{background:var(--surface);border-radius:10px;padding:20px;max-width:340px;width:100%;}
+.modal h2{font-family:var(--font-d);font-size:17px;margin:0 0 16px;}
+.modal-actions{display:flex;gap:10px;}
+.modal-actions button{flex:1;padding:12px;border-radius:6px;font-family:var(--font-d);font-weight:700;font-size:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);}
+.modal-actions .confirm{background:var(--primary);color:var(--primary-text);border-color:var(--primary);}
+.toast{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:20px;font-size:13px;z-index:60;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app-wrap">
+  <div id="statusbar"><span class="dot" id="statusDot"></span><span id="statusText"></span></div>
+  <main id="app">
+    <section id="view-system" class="view active">
+      <h1 class="page-title">ניהול מערכת</h1>
+      <div class="switch-card">
+        <span class="switch-label">הקיוסק פתוח</span>
+        <label class="switch"><input type="checkbox" id="switchKioskStatus" onchange="toggleKioskOpen(this.checked)"><span class="slider"></span></label>
+      </div>
+      <div id="scheduleBlock"></div>
+      <button class="btn-outline" onclick="switchView('resetpw')">איפוס סיסמה</button>
+    </section>
+
+    <section id="view-resetpw" class="view">
+      <button class="back-btn" onclick="backToSystem()">→ חזרה</button>
+      <h1 class="page-title">איפוס סיסמה</h1>
+      <div class="field-block">
+        <label class="field-label" for="textPhoneNumber">מספר טלפון</label>
+        <input class="field-input" type="tel" id="textPhoneNumber" placeholder="05X-XXXXXXX">
+      </div>
+      <button class="primary-btn" onclick="submitResetPassword()">איפוס סיסמה</button>
+    </section>
+
+    <section id="view-inventory" class="view">
+      <h1 class="page-title">ניהול מלאי</h1>
+      <div class="section-note" id="summary"></div>
+      <div class="cat-tabs" id="catTabs"></div>
+      <div id="itemList"></div>
+      <button class="primary-btn" onclick="openAddModal()">+ הוספת פריט</button>
+    </section>
+
+    <section id="view-orders" class="view">
+      <h1 class="page-title">ניהול הזמנות</h1>
+      <div id="ordersList"></div>
+    </section>
+  </main>
+  <nav id="bottomnav">
+    <button class="nav-btn active" data-view="system">מערכת</button>
+    <button class="nav-btn" data-view="inventory">מלאי</button>
+    <button class="nav-btn" data-view="orders">הזמנות</button>
+  </nav>
+</div>
+
+<div id="addOverlay" class="overlay hidden">
+  <div class="modal">
+    <h2>הוספת פריט חדש</h2>
+    <div class="field-block">
+      <label class="field-label" for="addCat">קטגוריה</label>
+      <select class="field-input" id="addCat"></select>
+    </div>
+    <div class="field-block">
+      <label class="field-label" for="addName">שם הפריט</label>
+      <input class="field-input" id="addName" type="text" placeholder="לדוגמה: המבורגר טבעוני" maxlength="40">
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeAddModal()">ביטול</button>
+      <button class="confirm" onclick="submitAddItem()">הוספה</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ---------------- menu DB ---------------- */
+const DEFAULT_DB = {
+  main_meal: [
+    {item_id:101, name:'המבורגר',  topping_options:[401,402,403], sauce_options:[501,502]},
+    {item_id:102, name:'נקניקייה', topping_options:[403,404],     sauce_options:[501,503]}
+  ],
+  side: [
+    {item_id:201, name:"צ'יפס",   sauce_options:[501,502]},
+    {item_id:202, name:'טבעות בצל', sauce_options:[502,503]}
+  ],
+  drink: [ {item_id:301, name:'ספרייט'}, {item_id:302, name:'קולה'} ],
+  topping: [
+    {item_id:401, name:'חסה'}, {item_id:402, name:'עגבנייה'},
+    {item_id:403, name:'בצל'}, {item_id:404, name:'גבינה'}
+  ],
+  sauce: [
+    {item_id:501, name:'קטשופ'}, {item_id:502, name:'מיונז'}, {item_id:503, name:'חרדל'}
+  ]
+};
+const CATEGORIES = [
+  {key:'main_meal', label:'מנה ראשית', prefix:1},
+  {key:'side',      label:'מנה צדדית', prefix:2},
+  {key:'drink',     label:'שתייה',     prefix:3},
+  {key:'topping',   label:'תוספות',    prefix:4},
+  {key:'sauce',     label:'רטבים',     prefix:5}
+];
+const OPTION_KINDS = { main_meal:['topping_options','sauce_options'], side:['sauce_options'] };
+
+const MENU_KEY = 'admin_menu_v1';
+let DB = {}, stock = {}, activeCat = CATEGORIES[0].key;
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function allItems(){ return CATEGORIES.flatMap(c => DB[c.key]); }
+function dbFind(table, id){ return (DB[table]||[]).find(r=>r.item_id===id); }
+
+function loadMenu(){
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(MENU_KEY)||'null'); }catch(e){}
+  if(saved && saved.items){ DB = saved.items; stock = saved.stock || {}; }
+  else { DB = JSON.parse(JSON.stringify(DEFAULT_DB)); stock = {}; }
+  allItems().forEach(it=>{ if(!stock[it.item_id]) stock[it.item_id] = { status:'in_stock', qty:5 }; });
+}
+function saveMenu(){ try{ localStorage.setItem(MENU_KEY, JSON.stringify({items:DB, stock})); }catch(e){} }
+
+function setStatus(id, status){
+  const s = stock[id]; s.status = status;
+  if(status==='limited' && (!s.qty || s.qty<1)) s.qty = 5;
+  saveMenu(); showToast('הסטטוס עודכן'); renderInventory();
+}
+function setQty(id, qty){
+  qty = Math.max(0, parseInt(qty,10)||0);
+  stock[id].qty = qty;
+  if(qty===0) stock[id].status='unavailable';
+  saveMenu(); renderInventory();
+}
+function bumpQty(id, delta){ setQty(id, (stock[id].qty||0)+delta); }
+function toggleOption(itemId, catKey, kind, optId){
+  const item = dbFind(catKey, itemId);
+  const arr = item[kind] = item[kind] || [];
+  const i = arr.indexOf(optId);
+  if(i>-1) arr.splice(i,1); else arr.push(optId);
+  saveMenu(); renderInventory();
+}
+function pillHtml(s){
+  if(s.status==='unavailable') return '<span class="status-pill unavailable">אזל</span>';
+  if(s.status==='limited') return '<span class="status-pill limited">נותרו '+s.qty+'</span>';
+  return '<span class="status-pill instock">במלאי</span>';
+}
+function optionChipsHtml(item, catKey, kind, sourceTable, label){
+  const chosen = item[kind] || [];
+  const source = DB[sourceTable] || [];
+  const chips = source.length
+    ? '<div class="chip-list">' + source.map(opt=>
+        '<button class="chip '+(chosen.includes(opt.item_id)?'on':'')+'" onclick="toggleOption('+item.item_id+',\''+catKey+'\',\''+kind+'\','+opt.item_id+')">'+esc(opt.name)+'</button>'
+      ).join('') + '</div>'
+    : '<div class="chip-empty">עדיין לא הוגדרו '+label+'.</div>';
+  return '<div class="options-label">'+label+' שמתאימים למנה</div>'+chips;
+}
+function optionsSectionHtml(item, catKey){
+  const kinds = OPTION_KINDS[catKey];
+  if(!kinds) return '';
+  let html = '<div class="options-section">';
+  if(kinds.includes('topping_options')) html += optionChipsHtml(item, catKey, 'topping_options', 'topping', 'תוספות');
+  if(kinds.includes('sauce_options')) html += optionChipsHtml(item, catKey, 'sauce_options', 'sauce', 'רטבים');
+  html += '</div>';
+  return html;
+}
+function itemRowHtml(it, catKey){
+  const s = stock[it.item_id];
+  return '<div class="item-row '+(s.status==='unavailable'?'unavailable':'')+'">'
+    +'<div class="item-top"><div class="item-name">'+esc(it.name)+'</div>'+pillHtml(s)+'</div>'
+    +'<div class="stock-controls">'
+      +'<button class="stock-btn '+(s.status==='unavailable'?'on unavailable':'')+'" onclick="setStatus('+it.item_id+',\'unavailable\')">אזל</button>'
+      +'<button class="stock-btn '+(s.status==='limited'?'on limited':'')+'" onclick="setStatus('+it.item_id+',\'limited\')">כמות מוגבלת</button>'
+      +'<button class="stock-btn '+(s.status==='in_stock'?'on instock':'')+'" onclick="setStatus('+it.item_id+',\'in_stock\')">במלאי</button>'
+    +'</div>'
+    +(s.status==='limited'
+      ? '<div class="qty-wrap"><span class="qty-label">כמות:</span><button onclick="bumpQty('+it.item_id+',-1)">\u2212</button>'
+        +'<input type="number" min="0" value="'+s.qty+'" onchange="setQty('+it.item_id+', this.value)">'
+        +'<button onclick="bumpQty('+it.item_id+',1)">+</button></div>'
+      : '')
+    +optionsSectionHtml(it, catKey)
+    +'</div>';
+}
+function renderInventory(){
+  document.getElementById('catTabs').innerHTML = CATEGORIES.map(c=>
+    '<button class="cat-tab '+(c.key===activeCat?'active':'')+'" onclick="selectCat(\''+c.key+'\')">'+c.label+'</button>'
+  ).join('');
+  document.getElementById('itemList').innerHTML = DB[activeCat].map(it=>itemRowHtml(it, activeCat)).join('');
+  const items = allItems();
+  const unavailable = items.filter(it=>stock[it.item_id].status==='unavailable').length;
+  const limited = items.filter(it=>stock[it.item_id].status==='limited').length;
+  document.getElementById('summary').innerHTML = items.length+' פריטים · '+unavailable+' אזל · '+limited+' כמות מוגבלת';
+}
+function selectCat(key){ activeCat = key; renderInventory(); }
+
+function openAddModal(){
+  const sel = document.getElementById('addCat');
+  sel.innerHTML = CATEGORIES.map(c=>'<option value="'+c.key+'">'+c.label+'</option>').join('');
+  sel.value = activeCat;
+  document.getElementById('addName').value = '';
+  document.getElementById('addOverlay').classList.remove('hidden');
+  document.getElementById('addName').focus();
+}
+function closeAddModal(){ document.getElementById('addOverlay').classList.add('hidden'); }
+function nextIdFor(catKey){
+  const prefix = CATEGORIES.find(c=>c.key===catKey).prefix, base = prefix*100;
+  const existing = DB[catKey].map(it=>it.item_id);
+  let id = base+1; while(existing.includes(id)) id++;
+  return id;
+}
+function submitAddItem(){
+  const catKey = document.getElementById('addCat').value;
+  const name = document.getElementById('addName').value.trim();
+  if(!name){ document.getElementById('addName').focus(); return; }
+  const item = { item_id: nextIdFor(catKey), name };
+  if(OPTION_KINDS[catKey]) OPTION_KINDS[catKey].forEach(k=> item[k]=[]);
+  DB[catKey].push(item);
+  stock[item.item_id] = { status:'in_stock', qty:5 };
+  activeCat = catKey;
+  saveMenu(); closeAddModal(); showToast('הפריט נוסף'); renderInventory();
+}
+document.getElementById('addOverlay').addEventListener('click', e=>{ if(e.target.id==='addOverlay') closeAddModal(); });
+
+/* ---------------- kiosk status (system page) ---------------- */
+const KIOSK_KEY = 'admin_kiosk_v1';
+let kiosk = { open:true, scheduleEnabled:false, closeAt:null };
+const CLOSE_DELTAS = [1,5,10,15,30,45,60,90,120,150,180,240,300,360,420,480,540,600];
+
+function loadKiosk(){
+  try{ const s = JSON.parse(localStorage.getItem(KIOSK_KEY)||'null'); if(s) kiosk = s; }catch(e){}
+}
+function saveKiosk(){ try{ localStorage.setItem(KIOSK_KEY, JSON.stringify(kiosk)); }catch(e){} }
+function fmtDelta(min){
+  if(min<60) return min+' דקות';
+  if(min%60===0) return (min/60)+' שעות';
+  return Math.floor(min/60)+' שעות ו-'+(min%60)+' דקות';
+}
+function fmtClock(d){ return d.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}); }
+function renderScheduleBlock(){
+  const el = document.getElementById('scheduleBlock');
+  if(!kiosk.open){ el.innerHTML=''; return; }
+  let html = '<div class="switch-card sub"><span class="switch-label">קביעת שעת סגירה</span>'
+    +'<label class="switch"><input type="checkbox" id="switchSchedule" '+(kiosk.scheduleEnabled?'checked':'')+' onchange="toggleSchedule(this.checked)"><span class="slider"></span></label></div>';
+  if(kiosk.scheduleEnabled){
+    const now = Date.now();
+    html += '<div class="field-block"><label class="field-label" for="closeTimeSelect">סגירה בעוד</label><select class="field-input" id="closeTimeSelect" onchange="setCloseTime(this.value)">'
+      + CLOSE_DELTAS.map(m=>{
+          const t = fmtClock(new Date(now+m*60000));
+          return '<option value="'+m+'">'+fmtDelta(m)+' (עד '+t+')</option>';
+        }).join('') + '</select></div>';
+  }
+  el.innerHTML = html;
+  if(kiosk.scheduleEnabled){
+    const sel = document.getElementById('closeTimeSelect');
+    if(kiosk.closeAt){
+      const remainMin = Math.round((new Date(kiosk.closeAt).getTime()-now())/60000);
+      const closest = CLOSE_DELTAS.reduce((a,b)=>Math.abs(b-remainMin)<Math.abs(a-remainMin)?b:a, CLOSE_DELTAS[0]);
+      sel.value = closest;
+    }
+  }
+}
+function toggleKioskOpen(checked){
+  kiosk.open = checked;
+  if(!checked){ kiosk.scheduleEnabled=false; kiosk.closeAt=null; }
+  saveKiosk(); renderScheduleBlock(); updateStatusBar();
+}
+function toggleSchedule(checked){
+  kiosk.scheduleEnabled = checked;
+  kiosk.closeAt = checked ? new Date(Date.now()+CLOSE_DELTAS[0]*60000).toISOString() : null;
+  saveKiosk(); renderScheduleBlock(); updateStatusBar();
+}
+function setCloseTime(minStr){
+  const min = parseInt(minStr,10);
+  kiosk.closeAt = new Date(Date.now()+min*60000).toISOString();
+  saveKiosk(); updateStatusBar();
+}
+function updateStatusBar(){
+  const dot = document.getElementById('statusDot'), txt = document.getElementById('statusText');
+  document.getElementById('switchKioskStatus').checked = kiosk.open;
+  let isOpen = kiosk.open, label = 'פתוח';
+  if(isOpen && kiosk.scheduleEnabled && kiosk.closeAt){
+    const closeAt = new Date(kiosk.closeAt);
+    if(Date.now() >= closeAt.getTime()){ isOpen = false; }
+    else { label = 'פתוח עד '+fmtClock(closeAt); }
+  }
+  if(!isOpen) label = 'סגור';
+  dot.className = 'dot '+(isOpen?'open':'closed');
+  txt.textContent = label;
+}
+
+/* ---------------- reset password sub-page ---------------- */
+function backToSystem(){ switchView('system'); }
+function submitResetPassword(){
+  const phone = document.getElementById('textPhoneNumber').value.trim();
+  if(!phone){ document.getElementById('textPhoneNumber').focus(); return; }
+  showToast('קישור לאיפוס נשלח למספר '+phone);
+  document.getElementById('textPhoneNumber').value = '';
+  setTimeout(backToSystem, 900);
+}
+
+/* ---------------- orders page ---------------- */
+const ORDERS_KEY = 'admin_orders_v1';
+let orders = [];
+function genOrderId(){
+  const chars='abcdefghijklmnopqrstuvwxyz0123456789';
+  let id; do{ id = Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join(''); }
+  while(orders.some(o=>o.id===id));
+  return id;
+}
+function seedOrders(){
+  const now = Date.now();
+  orders = [
+    { id:genOrderId(), time:new Date(now-6*60000).toISOString(), status:'preparing',
+      items:[{name:'המבורגר', extras:['תוספות: חסה, בצל','רוטב: קטשופ']},{name:'ספרייט', extras:[]}] },
+    { id:genOrderId(), time:new Date(now-3*60000).toISOString(), status:'preparing',
+      items:[{name:'נקניקייה', extras:['תוספות: גבינה','רוטב: חרדל']}] },
+    { id:genOrderId(), time:new Date(now-12*60000).toISOString(), status:'ready',
+      items:[{name:"צ'יפס", extras:['רוטב: מיונז']},{name:'קולה', extras:[]}] },
+    { id:genOrderId(), time:new Date(now-1*60000).toISOString(), status:'preparing',
+      items:[{name:'טבעות בצל', extras:[]}] }
+  ];
+  saveOrders();
+}
+function loadOrders(){
+  try{ const s = JSON.parse(localStorage.getItem(ORDERS_KEY)||'null'); if(s) orders = s; else seedOrders(); }
+  catch(e){ seedOrders(); }
+}
+function saveOrders(){ try{ localStorage.setItem(ORDERS_KEY, JSON.stringify(orders)); }catch(e){} }
+function toggleOrderDetail(id){ document.getElementById('detail-'+id).classList.toggle('open'); }
+function markReady(id){
+  const o = orders.find(o=>o.id===id); if(!o) return;
+  o.status='ready'; saveOrders(); showToast('הזמנה #'+id+' מוכנה — התראה נשלחה ללקוח'); renderOrders();
+}
+function markPaid(id){
+  orders = orders.filter(o=>o.id!==id); saveOrders(); showToast('הזמנה #'+id+' שולמה ונסגרה'); renderOrders();
+}
+function markCanceled(id){
+  orders = orders.filter(o=>o.id!==id); saveOrders(); showToast('הזמנה #'+id+' בוטלה — התראה נשלחה ללקוח'); renderOrders();
+}
+function renderOrders(){
+  const el = document.getElementById('ordersList');
+  if(orders.length===0){ el.innerHTML = '<div class="empty-state">אין הזמנות פתוחות כרגע.</div>'; return; }
+  el.innerHTML = orders.map(o=>{
+    const t = fmtClock(new Date(o.time));
+    const itemsHtml = o.items.map(it=>
+      '<div class="cart-item-sub"><strong>'+esc(it.name)+'</strong>'+(it.extras.length?' — '+it.extras.map(esc).join(' · '):'')+'</div>'
+    ).join('');
+    const isReady = o.status==='ready';
+    const actions = '<div class="order-actions">'
+      + (isReady
+          ? '<button class="order-btn primary" onclick="markPaid(\''+o.id+'\')">סמן כשולם</button>'
+          : '<button class="order-btn primary" onclick="markReady(\''+o.id+'\')">סמן כמוכן</button>')
+      + '<button class="order-btn danger" onclick="markCanceled(\''+o.id+'\')">ביטול</button></div>';
+    return '<div class="order-row"><div class="order-row-head" onclick="toggleOrderDetail(\''+o.id+'\')">'
+      +'<div><div class="order-id">הזמנה #'+o.id+'</div><div class="order-time">'+t+'</div></div>'
+      +'<span class="status-badge '+o.status+'">'+(isReady?'מוכנה לאיסוף':'בהכנה')+'</span></div>'
+      +'<div class="order-detail" id="detail-'+o.id+'">'+itemsHtml+'</div>'+actions+'</div>';
+  }).join('');
+}
+
+/* ---------------- view switching / toast ---------------- */
+let currentView = 'system';
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  const isTab = ['system','inventory','orders'].includes(view);
+  document.getElementById('bottomnav').classList.toggle('hidden', !isTab);
+  if(isTab) document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='inventory') renderInventory();
+  if(view==='orders') renderOrders();
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click', ()=>switchView(b.dataset.view)));
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+loadMenu(); loadKiosk(); loadOrders();
+renderScheduleBlock(); updateStatusBar(); renderInventory(); renderOrders();
+setInterval(updateStatusBar, 30000);
+</script>
+</body>
+</html>

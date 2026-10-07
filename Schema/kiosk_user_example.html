@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corner Grill Kiosk (Copy)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf6ef; --surface:#ffffff; --text:#211a12; --sub:#8a7b68;
+  --primary:#c0392b; --primary-text:#ffffff; --border:#e6dcc8; --chip:#fbeee9;
+  --ready:#3e7d44; --prep:#b9791f;
+  --font-d:'Archivo',system-ui,sans-serif;
+  --font-b:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#181310;--surface:#241d17;--text:#f2e9db;--sub:#a5947e;--border:#3a2f24;--chip:#3a231d;}
+}
+:root[data-theme="dark"]{--bg:#181310;--surface:#241d17;--text:#f2e9db;--sub:#a5947e;--border:#3a2f24;--chip:#3a231d;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-b);-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer;}
+button:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+#app-wrap{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);}
+#statusbar{position:sticky;top:0;z-index:10;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-d);font-weight:700;font-size:15px;}
+.dot{width:9px;height:9px;border-radius:50%;}
+.dot.open{background:var(--ready);box-shadow:0 0 0 4px rgba(62,125,68,.15);}
+.dot.closed{background:var(--primary);box-shadow:0 0 0 4px rgba(192,57,43,.15);}
+main#app{flex:1;padding:18px 16px 24px;overflow-y:auto;}
+.view{display:none;}
+.view.active{display:block;}
+.page-title{font-family:var(--font-d);font-size:24px;font-weight:800;letter-spacing:-.01em;margin:2px 0 18px;}
+.cat-tabs{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.cat-tab{width:100%;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:var(--font-d);font-weight:700;font-size:14px;text-transform:capitalize;}
+.cat-tab.active{background:var(--primary);color:var(--primary-text);border-color:var(--primary);}
+.section{margin-bottom:20px;}
+.section-label{font-size:13px;font-weight:600;color:var(--sub);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px;}
+.btn-list{display:flex;flex-direction:column;gap:8px;}
+.item-btn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;}
+.item-btn.selected{border-color:var(--primary);background:var(--chip);font-weight:700;}
+.indicator{width:18px;height:18px;flex-shrink:0;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;}
+.item-btn.base .indicator{border-radius:50%;}
+.item-btn.addon .indicator{border-radius:4px;}
+.item-btn.selected .indicator{background:var(--primary);border-color:var(--primary);}
+.indicator .rdot{width:6px;height:6px;background:#fff;border-radius:50%;}
+.primary-btn{width:100%;padding:14px;border-radius:6px;border:none;background:var(--primary);color:var(--primary-text);font-family:var(--font-d);font-weight:700;font-size:15px;margin-top:6px;}
+.primary-btn:disabled{opacity:.35;}
+.empty-state{text-align:center;color:var(--sub);padding:60px 16px;font-size:14px;line-height:1.6;}
+.cart-item{border-bottom:1px dashed var(--border);padding:16px 0;}
+.cart-item:first-child{padding-top:0;}
+.cart-item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.cart-item-cat{font-size:12px;color:var(--sub);}
+.cart-item-name{font-family:var(--font-d);font-size:16px;font-weight:700;margin-top:2px;}
+.cart-item-sub{font-size:13px;color:var(--sub);margin-top:4px;}
+.remove-btn{background:none;border:none;color:var(--primary);font-size:13px;font-weight:700;font-family:var(--font-d);white-space:nowrap;}
+.order-row{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;background:var(--surface);}
+.order-row-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:10px;}
+.order-id{font-family:'Courier New',monospace;font-weight:700;font-size:15px;}
+.order-time{font-size:12px;color:var(--sub);margin-top:2px;}
+.status-badge{font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;white-space:nowrap;}
+.status-badge.preparing{background:rgba(185,121,31,.15);color:var(--prep);}
+.status-badge.ready{background:rgba(62,125,68,.15);color:var(--ready);}
+.order-detail{margin-top:0;max-height:0;overflow:hidden;}
+.order-detail.open{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);max-height:600px;}
+#bottomnav{position:sticky;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px);}
+.nav-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:13px 0 11px;background:none;border:none;border-top:2px solid transparent;color:var(--sub);font-family:var(--font-d);font-size:12px;font-weight:700;}
+.nav-btn.active{color:var(--primary);border-top-color:var(--primary);}
+.badge{background:var(--primary);color:#fff;font-size:10px;border-radius:10px;min-width:16px;padding:1px 5px;}
+.hidden{display:none!important;}
+.overlay{position:fixed;inset:0;background:rgba(20,15,10,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;}
+.modal{background:var(--surface);border-radius:10px;padding:20px;max-width:340px;width:100%;}
+.modal p{margin:0 0 18px;font-size:15px;line-height:1.5;}
+.modal-actions{display:flex;gap:10px;}
+.modal-actions button{flex:1;padding:12px;border-radius:6px;font-family:var(--font-d);font-weight:700;font-size:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);}
+.modal-actions .confirm{background:var(--primary);color:var(--primary-text);border-color:var(--primary);}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:20px;font-size:13px;z-index:60;font-weight:600;}
+</style>
+</head>
+<body>
+<div id="app-wrap">
+  <div id="statusbar"></div>
+  <main id="app">
+    <section id="view-menu" class="view active">
+      <h1 class="page-title">Order</h1>
+      <div id="menu-content"></div>
+    </section>
+    <section id="view-cart" class="view">
+      <h1 class="page-title">Your cart</h1>
+      <div id="cart-content"></div>
+    </section>
+    <section id="view-track" class="view">
+      <h1 class="page-title">Track order</h1>
+      <div id="track-content"></div>
+    </section>
+  </main>
+  <nav id="bottomnav">
+    <button class="nav-btn active" data-view="menu">Menu</button>
+    <button class="nav-btn" data-view="cart">Cart<span id="cartBadge" class="badge hidden">0</span></button>
+    <button class="nav-btn" data-view="track">Track order</button>
+  </nav>
+</div>
+<div id="modalOverlay" class="overlay hidden">
+  <div class="modal">
+    <p id="modalText"></p>
+    <div class="modal-actions">
+      <button id="modalCancel">Keep editing</button>
+      <button id="modalConfirm" class="confirm">Send order</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+/*
+ * ---- Simulated database ---------------------------------------------
+ * In a real deployment these five tables would live in a database and
+ * be fetched over an API. Here they're a hard-coded global object
+ * standing in for that data source, so the rest of the app can be
+ * written exactly as if it were reading from a real DB layer (see the
+ * getters just below) and swapping in real fetch calls later only
+ * means changing this one block.
+ *
+ * ID ranges double as a poor-man's namespace, so any id tells you what
+ * kind of row it points to just by looking at it:
+ *   1xx  main meal item      (hotdog, hamburger...)
+ *   2xx  side item           (chips, onion rings...)
+ *   3xx  drink item          (sprite, cola...)
+ *   4xx  topping             (lettuce, cheese...)
+ *   5xx  sauce                (ketchup, mayo...)
+ *
+ * main_meal : { item_id, name, topping_options: [topping_id...], sauce_options: [sauce_id...] }
+ * side      : { item_id, name, sauce_options: [sauce_id...] }
+ * drink     : { item_id, name }
+ * topping   : { item_id, name }
+ * sauce     : { item_id, name }
+ *
+ * Each main/side item lists only the topping/sauce ids it actually
+ * offers, so two meals can share some add-ons and differ on others
+ * (e.g. the hamburger and hotdog both offer onion, id 403, but only
+ * the hamburger offers lettuce, id 401).
+ */
+const DB = {
+  topping: [
+    {item_id:401, name:'Lettuce'},
+    {item_id:402, name:'Tomato'},
+    {item_id:403, name:'Onion'},
+    {item_id:404, name:'Cheese'}
+  ],
+  sauce: [
+    {item_id:501, name:'Ketchup'},
+    {item_id:502, name:'Mayo'},
+    {item_id:503, name:'Mustard'}
+  ],
+  main_meal: [
+    {item_id:101, name:'Hamburger', topping_options:[401,402,403], sauce_options:[501,502]},
+    {item_id:102, name:'Hotdog',    topping_options:[403,404],     sauce_options:[501,503]}
+  ],
+  side: [
+    {item_id:201, name:'Chips',       sauce_options:[501,502]},
+    {item_id:202, name:'Onion rings', sauce_options:[502,503]}
+  ],
+  drink: [
+    {item_id:301, name:'Sprite'},
+    {item_id:302, name:'Cola'}
+  ]
+};
+// Category -> which DB table backs it, and what the base-item picker is called.
+const CATEGORIES = {
+  main:  { table:'main_meal', baseLabel:'Meal' },
+  side:  { table:'side',      baseLabel:'Meal' },
+  drink: { table:'drink',     baseLabel:'Drink' }
+};
+
+// ---- "Query" helpers -- the only places that read the DB tables ----
+function dbFind(table, id){ return DB[table].find(r=>r.item_id===id); }
+function baseItemsFor(cat){ return DB[CATEGORIES[cat].table]; }
+function toppingOptionsFor(item){ return (item.topping_options||[]).map(id=>dbFind('topping', id)); }
+function sauceOptionsFor(item){ return (item.sauce_options||[]).map(id=>dbFind('sauce', id)); }
+
+const READY_DELAY = 25000;
+
+// state.base holds the selected base item's item_id (or null); addon
+// sets hold topping/sauce item_ids, since which ones are even valid
+// depends on which specific base item is selected.
+let state = { cat:'main', base:null, toppings:new Set(), sauces:new Set() };
+let cart = [];
+let orders = [];
+let orderSeq = 1000;
+let currentView = 'menu';
+let pendingConfirm = null;
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function loadState(){
+  try{
+    orders = JSON.parse(localStorage.getItem('kiosk_orders')||'[]');
+    const s = parseInt(localStorage.getItem('kiosk_seq')||'1000',10);
+    orderSeq = isNaN(s) ? 1000 : s;
+  }catch(e){ orders=[]; orderSeq=1000; }
+}
+function saveOrders(){
+  try{
+    localStorage.setItem('kiosk_orders', JSON.stringify(orders));
+    localStorage.setItem('kiosk_seq', String(orderSeq));
+  }catch(e){}
+}
+function scheduleReady(order){
+  if(order.status==='ready') return;
+  const remain = READY_DELAY - (Date.now() - new Date(order.time).getTime());
+  const finish = ()=>{ order.status='ready'; saveOrders(); if(currentView==='track') renderTrack(); };
+  if(remain<=0) finish(); else setTimeout(finish, remain);
+}
+
+function updateStatusBar(){
+  const h = new Date().getHours();
+  const open = h>=8 && h<22;
+  document.getElementById('statusbar').innerHTML =
+    '<span class="dot '+(open?'open':'closed')+'"></span>'+(open?'Open':'Closed');
+}
+
+// Renders one labelled group of item rows. `rows` are DB records
+// ({item_id, name}); `isBase` picks the radio (single-select) vs.
+// checkbox (multi-select) indicator shape.
+function section(label, rows, isBase, isSelectedFn, onClickFn){
+  const html = rows.map(row=>{
+    const sel = isSelectedFn(row.item_id);
+    const ind = sel ? (isBase ? '<span class="rdot"></span>' : '&#10003;') : '';
+    return '<button class="item-btn '+(isBase?'base':'addon')+' '+(sel?'selected':'')+'" onclick="'+onClickFn(row.item_id)+'">'
+      +'<span class="indicator">'+ind+'</span><span>'+esc(row.name)+'</span></button>';
+  }).join('');
+  return '<div class="section"><div class="section-label">'+label+'</div><div class="btn-list">'+html+'</div></div>';
+}
+
+function renderMenu(){
+  const catCfg = CATEGORIES[state.cat];
+  let html = '<div class="cat-tabs">' + Object.keys(CATEGORIES).map(c=>
+    '<button class="cat-tab '+(c===state.cat?'active':'')+'" onclick="selectCat(\''+c+'\')">'+c+'</button>'
+  ).join('') + '</div>';
+
+  html += section(catCfg.baseLabel, baseItemsFor(state.cat), true, id=>state.base===id, id=>'selectBase('+id+')');
+
+  // The selected base item is looked up fresh from the DB every render,
+  // so its topping/sauce options are always specific to *that* item
+  // (e.g. hamburger vs. hotdog) rather than shared across the category.
+  const baseItem = state.base ? dbFind(catCfg.table, state.base) : null;
+  if(baseItem){
+    const toppings = toppingOptionsFor(baseItem);
+    const sauces = sauceOptionsFor(baseItem);
+    if(toppings.length) html += section('Toppings', toppings, false, id=>state.toppings.has(id), id=>"toggleAddon('toppings',"+id+")");
+    if(sauces.length) html += section('Sauce', sauces, false, id=>state.sauces.has(id), id=>"toggleAddon('sauces',"+id+")");
+  }
+  html += '<button class="primary-btn" '+(state.base?'':'disabled')+' onclick="addToCart()">Add to cart</button>';
+  document.getElementById('menu-content').innerHTML = html;
+}
+function selectCat(cat){ state = {cat, base:null, toppings:new Set(), sauces:new Set()}; renderMenu(); }
+function selectBase(id){
+  // Switching (or deselecting) the base item invalidates any
+  // previously-picked add-ons, since a different item can offer a
+  // different topping/sauce set.
+  state.base = (state.base===id ? null : id);
+  state.toppings = new Set(); state.sauces = new Set();
+  renderMenu();
+}
+function toggleAddon(kind, id){ const s = state[kind]; s.has(id) ? s.delete(id) : s.add(id); renderMenu(); }
+function addToCart(){
+  if(!state.base) return;
+  const catCfg = CATEGORIES[state.cat];
+  const baseItem = dbFind(catCfg.table, state.base);
+  cart.push({
+    id: Date.now()+Math.random(),
+    cat: state.cat,
+    base: { item_id: baseItem.item_id, name: baseItem.name },
+    toppings: [...state.toppings].map(id=>dbFind('topping', id)),
+    sauces: [...state.sauces].map(id=>dbFind('sauce', id))
+  });
+  state = { cat:state.cat, base:null, toppings:new Set(), sauces:new Set() };
+  updateCartBadge(); showToast('Added to cart'); renderMenu();
+}
+
+function extrasHtml(it){
+  const lines = [];
+  if(it.toppings.length) lines.push('Toppings: '+it.toppings.map(t=>t.name).join(', '));
+  if(it.sauces.length) lines.push('Sauce: '+it.sauces.map(s=>s.name).join(', '));
+  return lines.map(l=>'<div class="cart-item-sub">'+esc(l)+'</div>').join('');
+}
+function renderCart(){
+  let html;
+  if(cart.length===0){
+    html = '<div class="empty-state">Your cart is empty.<br>Add a main, a side, or a drink to get started.</div>';
+  } else {
+    html = cart.map(it=>
+      '<div class="cart-item"><div class="cart-item-head"><div>'
+      +'<div class="cart-item-cat">'+it.cat+'</div>'
+      +'<div class="cart-item-name">'+esc(it.base.name)+'</div></div>'
+      +'<button class="remove-btn" onclick="removeFromCart('+it.id+')">Remove</button></div>'
+      +extrasHtml(it)+'</div>'
+    ).join('');
+  }
+  html += '<button class="primary-btn" '+(cart.length===0?'disabled':'')+' onclick="startCompleteOrder()">Place order</button>';
+  document.getElementById('cart-content').innerHTML = html;
+}
+function removeFromCart(id){ cart = cart.filter(i=>i.id!==id); updateCartBadge(); renderCart(); }
+function startCompleteOrder(){ if(cart.length===0) return; openModal('Send this order to the kitchen?', confirmOrder); }
+function confirmOrder(){
+  const id = 'A'+(orderSeq++);
+  const order = { id, time:new Date().toISOString(), items:cart.slice(), status:'preparing' };
+  orders.unshift(order); saveOrders(); scheduleReady(order);
+  cart = []; updateCartBadge();
+  showToast('Order #'+id+' sent');
+  setTimeout(()=>switchView('track'), 900);
+}
+
+function renderTrack(){
+  let html;
+  if(orders.length===0){
+    html = '<div class="empty-state">No orders yet.<br>Orders you place will show up here.</div>';
+  } else {
+    html = orders.map(o=>{
+      const t = new Date(o.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const items = o.items.map(it=>
+        '<div class="cart-item-sub"><strong>'+esc(it.base.name)+'</strong> &middot; '+it.cat+'</div>'+extrasHtml(it)
+      ).join('');
+      const label = o.status==='ready' ? 'Ready for pickup' : 'Not ready';
+      return '<div class="order-row"><div class="order-row-head" onclick="toggleOrder(\''+o.id+'\')">'
+        +'<div><div class="order-id">Order #'+o.id+'</div><div class="order-time">'+t+'</div></div>'
+        +'<span class="status-badge '+o.status+'">'+label+'</span></div>'
+        +'<div class="order-detail" id="detail-'+o.id+'">'+items+'</div></div>';
+    }).join('');
+  }
+  document.getElementById('track-content').innerHTML = html;
+}
+function toggleOrder(id){ document.getElementById('detail-'+id).classList.toggle('open'); }
+
+function openModal(text, onConfirm){
+  document.getElementById('modalText').textContent = text;
+  pendingConfirm = onConfirm;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.add('hidden'); pendingConfirm = null; }
+document.getElementById('modalConfirm').onclick = ()=>{ if(pendingConfirm) pendingConfirm(); closeModal(); };
+document.getElementById('modalCancel').onclick = closeModal;
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.add('hidden'), 1800);
+}
+function updateCartBadge(){
+  const b = document.getElementById('cartBadge');
+  b.textContent = cart.length; b.classList.toggle('hidden', cart.length===0);
+}
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  if(view==='menu') renderMenu();
+  if(view==='cart') renderCart();
+  if(view==='track') renderTrack();
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click', ()=>switchView(b.dataset.view)));
+
+loadState();
+orders.forEach(scheduleReady);
+updateStatusBar();
+setInterval(updateStatusBar, 60000);
+updateCartBadge();
+renderMenu();
+</script>
+</body>
+</html>
