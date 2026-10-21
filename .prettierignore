@@ -1,0 +1,7 @@
+lib/generated
+.next
+prisma/migrations
+node_modules
+Bagrut
+Programer files
+Schema
