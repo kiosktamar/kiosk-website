@@ -1,38 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/health/route.ts — health check route using centralized route() wrapper.
+
+import { route, json } from '@/lib/http';
+import { AppError } from '@/lib/errors';
 import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _req: NextRequest,
-  _ctx: { params: Promise<Record<string, string>> },
-): Promise<NextResponse> {
+export const GET = route(async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    return NextResponse.json(
-      { ok: true },
-      {
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      },
-    );
-  } catch (error) {
-    console.error('health check failed');
-    return NextResponse.json(
-      {
-        error: {
-          code: 'SERVICE_UNAVAILABLE',
-          message: 'השירות אינו זמין כרגע',
-        },
-      },
-      {
-        status: 503,
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      },
-    );
+    return json({ ok: true });
+  } catch {
+    throw new AppError('SERVICE_UNAVAILABLE');
   }
-}
+});

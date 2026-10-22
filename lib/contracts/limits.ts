@@ -1,0 +1,39 @@
+// lib/contracts/limits.ts — system constants and limits from document 00 section 9.4.
+// Isomorphic: no imports from server-only code.
+
+export const PHONE_REGEX = /^05\d{8}$/;
+export const NAME_MIN = 2;
+export const NAME_MAX = 40;
+export const PASSWORD_MIN = 6;
+export const PASSWORD_MAX = 64;
+export const ADMIN_PASSWORD_MIN = 12;
+export const DEFAULT_RESET_PASSWORD = '123456';
+export const LOCKOUT_ATTEMPTS = 5;
+export const LOCKOUT_MINUTES = 10;
+export const STUDENT_SESSION_DAYS = 30;
+export const ADMIN_SESSION_DAYS = 7;
+export const SESSION_COOKIE = 'kt_session';
+export const LINE_QTY_MIN = 1;
+export const LINE_QTY_MAX = 5;
+export const ORDER_UNITS_MAX = 10;
+export const LOW_STOCK_THRESHOLD = 5;
+export const MY_ORDERS_CLOSED_LIMIT = 10;
+export const ORDER_CODE_LENGTH = 4;
+export const ORDER_CODE_ALPHABET = '23456789abcdefghjkmnpqrstuvwxyz';
+export const ORDER_CODE_MAX_ATTEMPTS = 5;
+export const CLOSE_TIME_MIN_MINUTES = 1;
+export const CLOSE_TIME_MAX_HOURS = 10;
+export const PRODUCT_NAME_MAX = 40;
+export const DESCRIPTION_MAX = 150;
+export const TOPPING_NAME_MAX = 30;
+export const SLOT_LABEL_MAX = 20;
+export const PRICE_MAX_AGOROT = 100_000; // sanity cap: ₪1,000
+export const PRICE_STEP_AGOROT = 50; // admin price stepper
+export const STATS_TOP_DAYS = 7;
+export const STATS_TOP_LIMIT = 5;
+export const STATS_DAILY_DAYS = 14;
+export const POLL_ADMIN_ORDERS_MS = 4_000;
+export const POLL_MY_ORDERS_MS = 5_000;
+export const POLL_KIOSK_STATUS_MS = 30_000;
+export const POLL_MENU_MS = 60_000;
+export const TIMEZONE = 'Asia/Jerusalem';
